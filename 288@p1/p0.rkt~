@@ -1,0 +1,147 @@
+#lang racket
+
+;; Project 0 Tic-tac-toe with Racket
+;; 
+;; Please immediately read README.md
+
+(provide board?
+         next-player
+          valid-move?
+          make-move
+          winner?
+          calculate-next-move)
+
+;; 
+;; Useful utility functions
+;;
+
+;; Returns the number of elements in l for which the predicate f
+;; evaluates to #t. For example:
+;;
+;;    (count (lambda (x) (> x 0)) '(-5 0 1 -3 3 4)) => 3
+;;    (count (lambda (x) (= x 0)) '(-5 0 1 -3 3 4)) => 1
+;; 
+;; This function is useful for later parts, especially winner?, where
+;; you can use it to count if the length of the row is equal to the
+;; number of elements in the row containing 'X (or 'O).
+(define (count f l)
+  (cond [(empty? l) 0]
+        [(f (car l)) (add1 (count f (cdr l)))]
+        [else (count f (cdr l))]))
+
+;; (define (count-empty l) (count (lambda (x) (equal? x 'E)) l))
+;; (count-empty '(E X E E O X X))
+(define (andmap f lst)
+  (cond [(empty? lst) #t]
+        [(f (first lst) (andmap f (rest lst)))]
+        [else #f]))
+
+(define (ormap f lst)
+  (cond [(empty? lst) #f]
+        [(f (first lst)) #t]
+        [else (ormap f (rest lst))]))
+
+(define (player-wins row player)
+  (andmap (lambda (e) (equal? e player)) row))
+
+;; (map (lambda (col) (list-ref board (+ (* col size) 1))))
+
+;; 
+;; Your solution begins here
+;;
+
+;; Checks if a number is a perfect square [helper]
+(define (perfect-square? x)
+  (integer? (sqrt x)))
+
+;; Counts the number of elements in a list [helper]
+(define (length l)
+    (if (empty? l)
+        0
+        (+ 1 (length (cdr l)))))
+
+;; Checks if a list contains only 'X', 'O', or 'E', returns a truthy value
+(define (contains-only-XOE lst)
+  (if (empty? lst)
+      #t
+      (and (or (equal? (car lst) 'X)
+               (equal? (car lst) 'O)
+               (equal? (car lst) 'E))
+           (contains-only-XOE (cdr lst)))))
+
+;; Check whether a list is a valid board
+(define (board? lst)
+  (if (empty? lst)
+      #f
+      (and (perfect-square? (length lst))
+           (contains-only-XOE lst))))
+
+;; From the board, calculate who is making a move this turn
+(define (next-player board)
+  (cond [< (count 'O board) (count 'X board) 'O]
+        [else 'X]))
+
+;; Checks if the position is ('E) [helper]
+(define (pos-empty? board row col)
+  (define target-idx (+ (* (sqrt (length board)) row) col))
+
+  (define (find-element board curr-idx)
+    (cond [(empty? board) #f]
+          [(equal? curr-idx target-idx) (car board)]
+          [else (find-element (cdr board) (+ curr-idx 1))]))
+
+  (equal? (find-element board 0) 'E))
+ 
+;; If player ('X or 'O) wants to make a move, check whether it's this
+;; player's turn and the position on the board is empty ('E)
+(define (valid-move? board row col player)
+   (and (board? board)
+        (equal? (next-player board) player)
+        (pos-empty? board row col)))
+
+;; To make a move, replace the position at (row,col) to the player's
+;; (either 'X or 'O).
+;; 
+;; Hint: the board is a one-dimensional list. Figure out a formula for
+;; (row,col) in terms of the board and use list-set.
+(define (make-move board row col player)
+  (let ([target-idx (+ (* (sqrt (length board)) row) col)])
+        (list-set board target-idx player)))
+
+;; Determine whether or not there is a winner
+;; 
+;; Hint: write a function to grab all rows, all columns, and the
+;; diagonals. Then check if any of them (consider using `ormap`) has
+;; the property that the count of cells with 'X (or 'O) is equal to
+;; its length.
+(define (is-winning? line)
+  (or (andmap (lambda (x) (equal? x 'X)) line)
+      (andmap (lambda (x) (equal? x 'O)) line)))
+
+(define (test-row board row curr-idx)
+  (let* ([board-size (length board)]
+         [side-length (sqrt board-size)]
+         [row-start (* row side-length)]
+         [row-end (+ row-start side-length)])
+    (is-winning? (cond [(empty? board) '()]
+                       [(> curr-idx row-end) '()]
+                       [(< curr-idx row-start) (test-row (rest board) row (+ curr-idx 1))]
+                       [else (cons (first board) (test-row (rest board) row (+ curr-idx 1)))]))))
+
+(define (get-cols board)
+  'todo)
+
+(define (get-diags board)
+  'todo)
+
+(define (winner? board)
+  (define bLength (sqrt (length board)))
+  'todo)
+
+;; The board is the list containing E O X
+;; Player will always be 'O
+;; returns a pair of x and y
+(define (calculate-next-move board player)
+  'todo)
+
+;; (lambda (x) - x))
